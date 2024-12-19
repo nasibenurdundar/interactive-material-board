@@ -1,0 +1,55 @@
+#include <Wire.h>
+#include <Adafruit_MPR121.h>
+
+// Create instances for each MPR121 sensor with unique I2C addresses
+Adafruit_MPR121 cap1 = Adafruit_MPR121();
+Adafruit_MPR121 cap2 = Adafruit_MPR121();
+
+// Unique I2C addresses for each sensor
+const uint8_t MPR121_ADDR1 = 0x5A; // Address for the first sensor
+const uint8_t MPR121_ADDR2 = 0x5B; // Address for the second sensor
+
+// Define very low touch and release thresholds for maximum sensitivity
+const uint8_t touchThreshold = 2;  // Lower values increase sensitivity
+const uint8_t releaseThreshold = 1; // Lower values increase sensitivity
+
+void setup() {
+  Serial.begin(9600);
+  Wire.begin();
+
+  if (!cap1.begin(MPR121_ADDR1)) {
+    Serial.println("MPR121 #1 not found");
+    while (1);
+  }
+
+  if (!cap2.begin(MPR121_ADDR2)) {
+    Serial.println("MPR121 #2 not found");
+    while (1);
+  }
+
+  // Set the touch and release thresholds for all electrodes on both sensors
+  cap1.setThresholds(touchThreshold, releaseThreshold);
+  cap2.setThresholds(touchThreshold, releaseThreshold);
+
+  Serial.println("MPR121 sensors found and initialized!");
+}
+
+void loop() {
+  uint16_t touch1 = cap1.touched();
+  uint16_t touch2 = cap2.touched();
+
+  // Send touch data for each sensor pad as a string of 12 integers
+  for (int i = 0; i < 12; i++) {
+    Serial.print((touch1 & (1 << i)) ? 1 : 0);
+    Serial.print(" "); // Space as a delimiter
+  }
+
+  for (int i = 0; i < 12; i++) {
+    Serial.print((touch2 & (1 << i)) ? 1 : 0);
+    if (i < 11) Serial.print(" "); // Space as a delimiter
+  }
+
+  Serial.println(); // End of the line
+  delay(100); // Adjust delay as needed
+}
+
